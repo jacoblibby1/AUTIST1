@@ -1,11 +1,11 @@
 # initialization of variables
-MCD = 0
+MACD = 0
 numberOfTrades = 0
 
 # for loop that controls entire script
 for while numberOfTrades <50:	
 
-	# if statement that determines whether to buy based on MCD
+	# if statement that determines whether to buy based on MACD
 	if...
 		# buy option
 
