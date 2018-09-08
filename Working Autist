@@ -1,0 +1,75 @@
+# This example algorithm uses the Moving Average Crossover Divergence (MACD) indicator as a buy/sell signal.
+
+# When the MACD signal less than 0, the stock price is trending down and it's time to sell.
+# When the MACD signal greater than 0, the stock price is trending up it's time to buy.
+
+# Because this algorithm uses the history function, it will only run in minute mode. 
+# We will constrain the trading to once per day at market open in this example.
+
+import talib
+import numpy as np
+import pandas as pd
+
+# Setup our variables
+def initialize(context):
+    context.stocks = symbols('AAPL', 'NFLX', 'AMD', 'CHK')
+    context.pct_per_stock = 10.0 / len(context.stocks)
+    
+    # Create a variable to track the date change
+    context.date = None
+
+def handle_data(context, data):
+    todays_date = get_datetime().date()
+    
+    # Do nothing unless the date has changed and its a new day.
+    if todays_date == context.date:
+        return
+    
+    # Set the new date
+    context.date = todays_date
+    
+    
+    # Load historical data for the stocks
+    prices = data.history(symbols(), 'price', 250, '1d')
+    
+    # Create the MACD signal and pass in the three parameters: fast period, slow period, and the signal.
+    
+    macd = talib.MACD
+    # This is a series that is indexed by sids.
+    
+    # Iterate over the list of stocks
+    for stock in context.stocks:
+        current_position = context.portfolio.positions[stock].amount
+        
+        # Close position for the stock when the MACD signal is negative and we own shares.
+        if macd < 0 and current_position > 0:
+            order_target(stock, 0)
+            
+        # Enter the position for the stock when the MACD signal is positive and 
+        # our portfolio shares are 0.
+        elif macd > 0 & current_position==0:
+            order_target_percent(stock, context.pct_per_stock)
+           
+
+       
+   
+
+# Define the MACD function   
+def MACD(prices, fastperiod=12, slowperiod=26, signalperiod=9):
+    '''
+    Function to return the difference between the most recent 
+    MACD value and MACD signal. Positive values are long
+    position entry signals 
+
+    optional args:
+        fastperiod = 12
+        slowperiod = 26
+        signalperiod = 9
+
+    Returns: macd - signal
+    '''
+    macd, signal, hist = talib.MACD(prices, 
+                                    fastperiod=fastperiod, 
+                                    slowperiod=slowperiod, 
+                                    signalperiod=signalperiod)
+    return macd[-1] - signal[-1]
